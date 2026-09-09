@@ -1,6 +1,8 @@
 
 services:
-  # Banking Infrastructure - Dedicated Payment Database
+  # --- Infrastructure ---
+
+  #  Dedicated Payment Database
   payment-db:
     image: postgres:16-alpine
     container_name: payment-gateway-payment-db
@@ -20,7 +22,7 @@ services:
     networks:
       - payment-network
 
-  # Banking Infrastructure - Message Queue for Async Payment Processing
+  # Message Queue for Async Payment Processing
   payment-mq:
     image: rabbitmq:3-management-alpine
     container_name: payment-gateway-payment-mq
@@ -144,13 +146,13 @@ services:
     networks:
       - payment-network
 
-  # Microservices
+  # --- Microservices ---
   auth-service:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=auth-service
+        SERVICE_NAME: auth-service
     image: payment-gateway/auth-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: auth-service
     ports:
@@ -166,7 +168,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=payment-service
+        SERVICE_NAME: payment-service
     image: payment-gateway/payment-service:${DATA_PLANE_TAG:-jvm}
     container_name: payment-service
     ports:
@@ -185,7 +187,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=merchant-service
+        SERVICE_NAME: merchant-service
     image: payment-gateway/merchant-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: merchant-service
     ports:
@@ -201,7 +203,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=vault-service
+        SERVICE_NAME: vault-service
     image: payment-gateway/vault-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: vault-service
     ports:
@@ -217,7 +219,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=notification-service
+        SERVICE_NAME: notification-service
     image: payment-gateway/notification-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: notification-service
     ports:
@@ -234,7 +236,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=fraud-service
+        SERVICE_NAME: fraud-service
     image: payment-gateway/fraud-service:${DATA_PLANE_TAG:-jvm}
     container_name: fraud-service
     ports:
@@ -250,7 +252,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SERVICE_NAME=api-gateway
+        SERVICE_NAME: api-gateway
     image: payment-gateway/api-gateway:${CONTROL_PLANE_TAG:-jvm}
     container_name: api-gateway
     ports:
