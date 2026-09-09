@@ -1,27 +1,30 @@
-# --- Stage 1: Build Stage ---
+# --- Stage 1: Build Phase ---
 FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /build
 
-# Copy the entire project context into the container
+COPY pom.xml ./
+RUN mvn install -N -DskipTests -Dcheckstyle.skip=true
+
 COPY . .
-
-# Accept the service name as a build argument (e.g., api-gateway, auth-service)
 ARG SERVICE_NAME
+RUN mvn clean package -pl ${SERVICE_NAME} -am -DskipTests -Dcheckstyle.skip=true -Dmaven.wagon.http.retryHandler.count=5
 
-# Build only the requested service and its internal dependencies (-am)
-RUN mvn clean package -pl ${SERVICE_NAME} -am -DskipTests
+# Extract Spring Boot layers
+RUN java -Djarmode=layertools -jar ${SERVICE_NAME}/target/*.jar extract --destination extracted
 
-
-# --- Stage 2: Runtime Stage ---
+# --- Stage 2: Runtime Phase ---
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Accept the service name again in the runtime stage
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
 ARG SERVICE_NAME
 
-# Copy the built jar file from the builder stage
-# (This assumes standard Maven target folder output structures)
-COPY --from=builder /build/${SERVICE_NAME}/target/*.jar app.jar
+# Copy strictly the 4 lightweight Spring Boot directories (NOT the whole target folder)
+COPY --from=builder /build/extracted/dependencies/ ./
+COPY --from=builder /build/extracted/spring-boot-loader/ ./
+COPY --from=builder /build/extracted/snapshot-dependencies/ ./
+COPY --from=builder /build/extracted/application/ ./
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
