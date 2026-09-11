@@ -1,4 +1,4 @@
-name: Payment Gateway CI/CD
+name: Payment Gateway CI
 
 on:
   push:
@@ -32,6 +32,26 @@ jobs:
         env:
           MAVEN_OPTS: "-Xmx5g"
         run: mvn clean verify -Dnative.skip=true -U
+
+  checkstyle:
+    name: Checkstyle CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Run Checkstyle
+        env:
+          MAVEN_OPTS: "-Xmx5g"
+        run: mvn checkstyle:check
 
   container-build:
     name: Verify JVM Container
